@@ -53,7 +53,7 @@ body {
 }
 
 .border-gradient-shippypro {
-  border-image-source: linear-gradient(to left, #ff01a2, #05ffde) !important;
+  border-image-source: linear-gradient(to left, #ff01a2, #05ffde);
 }
 
 .logo {
@@ -71,10 +71,12 @@ body {
 }
 
 .card {
+  padding: 0 !important;
   margin-bottom: 20px;
   -webkit-box-shadow: 0px 5px 15px -5px rgba(0,0,0,0.75);
   -moz-box-shadow: 0px 5px 15px -5px rgba(0,0,0,0.75);
   box-shadow: 0px 5px 15px -5px rgba(0,0,0,0.75);
+  border: 5px solid rgba(0,0,0,1) !important;
 }
 
 .card .card-title {
