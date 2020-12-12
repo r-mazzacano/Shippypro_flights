@@ -8,6 +8,7 @@ import Select from 'react-select';
 export const Flights = () => {
   const [flights, setFlights] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   const [airports, setAirports] = useState([]);
   const [departure, setDeparture] = useState([]);
@@ -19,61 +20,62 @@ export const Flights = () => {
 
   useEffect(() => {
     const getFlights = async () => {
-      const resultFlights = route ? await axios.get(`flights/from/${departure}/to/${arrival}`) : await axios.get('flights/all');
-      route && setIsSearch(true)
-      
-      const resultAirlines = await axios.get('airlines/all');
-      const resultAirport = await axios.get('airports/all');
-      // eslint-disable-next-line
-      const AirlinesMap = resultAirlines.data.data.reduce((map, item) => map.set(item.id, item.name), new Map);
+      setHasError(false);
 
-      const AirlineResult = resultFlights.data.data.map((item) => (Object.assign({
-        airlineName: AirlinesMap.get(item.airlineId)
-      }, item)));
-      // eslint-disable-next-line
-      const AirportMap = resultAirport.data.data.reduce((map, item) => map.set(item.id, item.codeIata), new Map);
+      try {
+        const resultFlights = route ? await axios.get(`flights/from/${departure}/to/${arrival}`) : await axios.get('flights/all');
+        route && setIsSearch(true)  
+        const resultAirlines = await axios.get('airlines/all');
+        const resultAirport = await axios.get('airports/all');
+        // eslint-disable-next-line
+        const AirlinesMap = resultAirlines.data.data.reduce((map, item) => map.set(item.id, item.name), new Map);
 
-      const AirportResult = AirlineResult.map((item) => (Object.assign({
-        departureName: AirportMap.get(item.departureAirportId),
-        arrivalName: AirportMap.get(item.arrivalAirportId)
-      }, item)));
+        const AirlineResult = resultFlights.data.data.map((item) => (Object.assign({
+          airlineName: AirlinesMap.get(item.airlineId)
+        }, item)));
+        // eslint-disable-next-line
+        const AirportMap = resultAirport.data.data.reduce((map, item) => map.set(item.id, item.codeIata), new Map);
 
-      console.log(AirportResult);
-      setFlights(AirportResult);
+        const AirportResult = AirlineResult.map((item) => (Object.assign({
+          departureName: AirportMap.get(item.departureAirportId),
+          arrivalName: AirportMap.get(item.arrivalAirportId)
+        }, item)));
+
+        function renameKey ( obj, oldKey, newKey ) {
+          obj[newKey] = obj[oldKey];
+          delete obj[oldKey];
+        }
+        function deleteKey ( obj, key ) {
+          delete obj[key];
+        }
+  
+        resultAirport.data.data.forEach( obj => renameKey( obj, 'id', 'value' ) );
+        resultAirport.data.data.forEach( obj => renameKey( obj, 'codeIata', 'label' ) );
+        resultAirport.data.data.forEach( obj => deleteKey( obj, 'latitude' ) );
+        resultAirport.data.data.forEach( obj => deleteKey( obj, 'longitude' ) );
+
+        setAirports(resultAirport.data.data);
+        setFlights(AirportResult);
+      } catch (error) {
+        console.log('Error: ' + error)
+        setHasError(true);
+      }
+    
       setIsLoading(false);
     };
     getFlights();
-
-    const getAirports = async () => {
-      const resultAirport = await axios.get('airports/all');
-    
-      function renameKey ( obj, oldKey, newKey ) {
-        obj[newKey] = obj[oldKey];
-        delete obj[oldKey];
-      }
-      function deleteKey ( obj, key ) {
-        delete obj[key];
-      }
-
-      resultAirport.data.data.forEach( obj => renameKey( obj, 'id', 'value' ) );
-      resultAirport.data.data.forEach( obj => renameKey( obj, 'codeIata', 'label' ) );
-      resultAirport.data.data.forEach( obj => deleteKey( obj, 'latitude' ) );
-      resultAirport.data.data.forEach( obj => deleteKey( obj, 'longitude' ) );
-      setAirports(resultAirport.data.data);
-    };
-    getAirports();
     // eslint-disable-next-line
   }, [route]);
 
   const handleDeparture = (a) => {
     setDeparture(a.label);
-    (departure !== arrival) && arrival.length !== 0 && setValidation(true)
+    arrival.length !== 0 && setValidation(true)
     setDisableSearch(false)
   }
 
   const handleArrival = (b) => {
     setArrival(b.label);
-     (departure !== arrival) && departure.length !== 0 && setValidation(true)
+     departure.length !== 0 && setValidation(true)
      setDisableSearch(false)
   }
 
@@ -112,10 +114,14 @@ export const Flights = () => {
         {validation && ( <button onClick={searchFlight} type="button" className={ disableSearch ? 'btn btn-primary btn-block disabled' : 'btn btn-primary btn-block'}>Search</button> )}
     </div>
     </div>
-    
+
   {!isSearch &&  !isLoading && <div className="flightMessage d-flex justify-content-center align-items-center flex-column"><span>All Routes</span> <span>(num. flights: {numFlights})</span></div>}
   {isSearch && !isLoading && <div className="flightMessage d-flex justify-content-center align-items-center flex-column"><span>Route {route}</span> <span>(num. flights {numFlights})</span></div>}
     {isLoading && <Preloader />}
+    {!isLoading && hasError && (
+        <div>An error occurred in the data retrieval</div>
+      )
+    }
     {!isLoading && flights && (
         flights.sort((a, b) => a.price - b.price).map((flight) => {
           const { id, price, airlineName, departureName, arrivalName } = flight;
