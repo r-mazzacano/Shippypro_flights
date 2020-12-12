@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Shippypro Flights",
+  "name": "Shippypro Flights displays the most convenient flights between two airports",
   "icons": [
     {
       "src": "favicon.ico",
