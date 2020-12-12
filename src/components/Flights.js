@@ -2,9 +2,8 @@ import React, {useState, useEffect} from "react";
 import axios from '../axiosIntance';
 import LazyLoad from 'react-lazyload';
 import {Preloader} from './Preloader';
+import Select from 'react-select';
 //import {SearchForm} from './SearchForm'
-
-import Select from 'react-select'
 
 export const Flights = () => {
   const [flights, setFlights] = useState([]);
@@ -16,7 +15,6 @@ export const Flights = () => {
   const [isSearch, setIsSearch] = useState(false);
   const [validation, setValidation] = useState(false)
   const [route, setRoute] = useState()
-  //const [direct, setDirect] = useState(false)
   const [disableSearch, setDisableSearch] = useState(false)
 
   useEffect(() => {
@@ -85,6 +83,7 @@ export const Flights = () => {
       setRoute(departure + ' - ' + arrival)
   } 
   const numFlights = flights.length
+
   return (
     <>
   <div className="row searchForm">
@@ -109,18 +108,17 @@ export const Flights = () => {
         />
     </div>
     <div className="col-md-4 d-flex justify-content-center align-items-center">
-        {!validation && ( <div className="validationSearch">Select Airport</div> )}
+        {!validation && ( <div className="validationSearch">Select Airports</div> )}
         {validation && ( <button onClick={searchFlight} type="button" className={ disableSearch ? 'btn btn-primary btn-block disabled' : 'btn btn-primary btn-block'}>Search</button> )}
     </div>
     </div>
-
+    
   {!isSearch &&  !isLoading && <div className="flightMessage d-flex justify-content-center align-items-center flex-column"><span>All Routes</span> <span>(num. flights: {numFlights})</span></div>}
   {isSearch && !isLoading && <div className="flightMessage d-flex justify-content-center align-items-center flex-column"><span>Route {route}</span> <span>(num. flights {numFlights})</span></div>}
     {isLoading && <Preloader />}
     {!isLoading && flights && (
         flights.sort((a, b) => a.price - b.price).map((flight) => {
           const { id, price, airlineName, departureName, arrivalName } = flight;
-         // if (route === (departureName + ' - ' + arrivalName)) {setDirect(true)}
           return (
           <LazyLoad key={id} once={flight.once} height={80} offset={[-80, 0]}>
           <div className="row">
@@ -129,8 +127,7 @@ export const Flights = () => {
                     {departureName} - {arrivalName}
                 </div>
                 <div className="card-body">
-                  {/*direct  && <div>direct flight</div>*/}
-                  {/*!direct  && <div>stop-overs</div>*/}
+                  {!isSearch ? '' : route === (departureName + ' - ' + arrivalName) ? <div>direct flight</div> : <div>stop-overs</div> }
                     <h2 className="card-title">{airlineName}</h2>
                 </div>
                 <div className="card-footer">
